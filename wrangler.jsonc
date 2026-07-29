@@ -27,7 +27,7 @@
     "SERVER_HOST": "postilion-server-01.peterkaminski.ai",
     "ADMIN_EMAILS": "kaminski@istori.com",
     // Instance chrome: what THIS deployment is called (software name is the fallback).
-    "INSTANCE_NAME": "Postilion Server 01",
+    "INSTANCE_NAME": "PKAI Postilion",
     "INSTANCE_OPERATOR": "Peter Kaminski",
     "RETENTION_DAYS": "90",
     "MAX_MESSAGE_BYTES": "65536",
