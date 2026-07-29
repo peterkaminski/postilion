@@ -72,8 +72,21 @@ export async function startChallenge(
       subject: `Postilion sign-in — PIN ${pin}`,
       text,
       category: "auth",
+      // Login mail goes only to verified existing account holders (the /login
+      // route checks before calling us) — attest that, so mailroom applies its
+      // known-recipient cap instead of the strict stranger cap. Signup mail
+      // targets an unproven address and stays strictly capped.
+      knownHint: opts.purpose === "login",
     });
-    if (!sent.ok) return { ok: false, error: `could not send sign-in email (${sent.reason ?? "unknown"})` };
+    if (!sent.ok) {
+      return {
+        ok: false,
+        error:
+          sent.reason === "victim-cap"
+            ? "this address has hit its daily limit for sign-in emails — the limit resets at midnight UTC"
+            : `could not send sign-in email (${sent.reason ?? "unknown"})`,
+      };
+    }
   } else {
     // Local dev without the mailroom binding: surface the link in the log.
     console.log(`[dev] magic link for ${opts.email}: ${link} (PIN ${pin})`);

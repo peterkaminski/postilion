@@ -11,6 +11,8 @@ export interface MailroomBinding {
     subject: string;
     text: string;
     category: "auth" | "notification" | "digest";
+    /** Caller attests the recipient is an existing account holder — mailroom applies its higher known-recipient victim cap. */
+    knownHint?: boolean;
   }): Promise<MailroomSendResult>;
 }
 
