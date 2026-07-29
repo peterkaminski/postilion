@@ -69,7 +69,11 @@ npx wrangler deploy
 
 Configuration is in `wrangler.jsonc` vars: `SERVER_HOST` (the host in your addresses), `ADMIN_EMAILS` (comma-separated; these emails may sign up without a passcode and see the admin screens), quotas, retention, and `TURNSTILE_SITE_KEY` (see [docs/turnstile.md](docs/turnstile.md) for minting a widget).
 
-**Instance name:** set `INSTANCE_NAME` to what *your* deployment is called (e.g. `"Postilion Server 01"`). The instance name is the header brand; the footer always credits the software: *"This server runs Postilion vX.Y.Z."* Unset, the instance is simply "Postilion".
+**Instance name:** set `INSTANCE_NAME` to what *your* deployment is called (e.g. `"Postilion Server 01"`). The instance name is the header brand; the footer always credits the software: *"This server runs Postilion vX.Y.Z."* Unset, the instance is simply "Postilion". Set `INSTANCE_OPERATOR` to put "operated by …" in the footer.
+
+**Terms of service are a first-class affordance.** Every instance serves `/terms` (footer-linked, referenced at signup). Postilion ships conservative US-default terms — acceptable use, unencrypted-at-rest honesty, as-is disclaimers, and an explicit *best-effort* clause: if operating an instance becomes burdensome, it may be shut down and all content removed; that is a design choice, not a failure mode. **Before letting anyone else use your instance, read the defaults (`src/terms.ts`) and customize them to your situation** — set `TERMS_MD` (markdown) to replace them entirely. The defaults are a starting position, not legal advice.
+
+**Agents bootstrap from `/llms.txt`.** Every instance serves a complete agent guide at `GET /llms.txt` — address forms, auth, API, inbox, limits — and API 401/404 responses carry a hint pointing to it. Hand an agent the server URL and a token; it can work out the rest.
 
 Sign-in email (magic link + PIN) is sent through a service-bound mailer worker (`MAILROOM` binding — see `src/env.ts` for the one-method interface it must implement). Without the binding, links are logged to the console — fine for local `wrangler dev`, not for production.
 

@@ -74,7 +74,7 @@ export function layout(env: Env, title: string, body: string, opts: { user?: { s
 <main>
 ${body}
 </main>
-<footer>This server runs <a href="${inst.software.url}">${escapeHtml(inst.software.name)}</a> v${escapeHtml(inst.software.version)} — open source under MPL-2.0. <span title='A postilion rides just one horse of the team: one rider, one horse, one L.'>&ldquo;${escapeHtml(inst.software.name)}&rdquo;, with one &ldquo;L&rdquo;.</span></footer>
+<footer>${env.INSTANCE_OPERATOR ? `${escapeHtml(inst.name)} is operated by ${escapeHtml(env.INSTANCE_OPERATOR)} · ` : ""}<a href="/terms">Terms</a> · <a href="/llms.txt">llms.txt</a><br>This server runs <a href="${inst.software.url}">${escapeHtml(inst.software.name)}</a> v${escapeHtml(inst.software.version)} — open source under MPL-2.0. <span title='A postilion rides just one horse of the team: one rider, one horse, one L.'>&ldquo;${escapeHtml(inst.software.name)}&rdquo;, with one &ldquo;L&rdquo;.</span></footer>
 </body>
 </html>`;
 }

@@ -20,9 +20,10 @@ const err = (c: ApiContext, status: 400 | 401 | 403 | 404 | 410 | 413 | 429, err
 api.use("/api/v1/*", async (c, next) => {
   const auth = c.req.header("authorization") ?? "";
   const m = /^Bearer\s+([a-f0-9]{64})$/i.exec(auth);
-  if (!m) return err(c, 401, "missing or malformed bearer token");
+  const hint = `agent guide: ${c.env.BASE_URL}/llms.txt`;
+  if (!m) return c.json({ ok: false, error: "missing or malformed bearer token", hint }, 401);
   const box = await lookupMailboxByToken(c.env, await sha256Hex(m[1].toLowerCase()));
-  if (!box) return err(c, 401, "unknown token");
+  if (!box) return c.json({ ok: false, error: "unknown token", hint }, 401);
   if (effectiveStatus(box) === "trashed") return err(c, 410, "this address is in the trash");
   c.set("mailbox", box);
   await next();

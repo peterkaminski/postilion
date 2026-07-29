@@ -7,6 +7,7 @@ import { layout, flash, esc } from "../html";
 import { startChallenge, verifyMagicLink, verifyPin, currentPrincipal, isAdmin, logout } from "../auth";
 import { isValidSlug } from "../address";
 import { verifyTurnstile, turnstileWidget } from "../turnstile";
+import { termsHtml } from "../terms";
 import { isEmail } from "../util";
 
 export const site = new Hono<{ Bindings: Env }>();
@@ -46,6 +47,7 @@ ${flash(e)}
   </label>
   ${turnstileWidget(c.env)}
   <button>Send me a sign-in link</button>
+  <p class="note">By signing up you agree to this server's <a href="/terms">Terms of Service</a>.</p>
 </form>`,
     ),
   );
@@ -160,6 +162,11 @@ site.get("/auth/verify", async (c) => {
 site.post("/auth/logout", async (c) => {
   await logout(c);
   return c.redirect("/");
+});
+
+site.get("/terms", async (c) => {
+  const { nav } = await navUser(c);
+  return c.html(layout(c.env, "Terms of Service", termsHtml(c.env), { user: nav }));
 });
 
 // Convenience: check whether the signed-in principal sees admin nav.

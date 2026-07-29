@@ -28,6 +28,10 @@ export interface Env {
   TURNSTILE_SITE_KEY: string;
   /** Optional display name for this deployment (instance chrome); the software name is the fallback. */
   INSTANCE_NAME?: string;
+  /** Optional operator name shown in the footer ("Operated by …") and implied throughout the terms. */
+  INSTANCE_OPERATOR?: string;
+  /** Optional markdown that fully replaces the shipped default terms at /terms. */
+  TERMS_MD?: string;
   // Secrets
   TURNSTILE_SECRET?: string;
 }

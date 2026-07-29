@@ -5,6 +5,7 @@
 import { Hono } from "hono";
 import type { Env } from "./env";
 import { intVar } from "./env";
+import { llmsTxt } from "./llms";
 import { site } from "./routes/site";
 import { dashboard } from "./routes/dashboard";
 import { admin } from "./routes/admin";
@@ -15,6 +16,9 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.get("/healthz", (c) => c.json({ ok: true, service: "postilion" }));
 
+// The server documents itself for agents (MeetingWords pattern).
+app.get("/llms.txt", (c) => c.text(llmsTxt(c.env)));
+
 app.route("/", site);
 app.route("/", dashboard);
 app.route("/", admin);
@@ -23,7 +27,7 @@ app.route("/", inbox);
 
 app.notFound((c) => {
   if (c.req.path.startsWith("/api/") || c.req.path.startsWith("/ifp/")) {
-    return c.json({ ok: false, error: "not found" }, 404);
+    return c.json({ ok: false, error: "not found", hint: `agent guide: ${c.env.BASE_URL}/llms.txt` }, 404);
   }
   return c.text("not found", 404);
 });
