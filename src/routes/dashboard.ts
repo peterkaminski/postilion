@@ -61,7 +61,7 @@ dashboard.get("/dashboard", async (c) => {
           .join("")}</table>`;
 
   return c.html(
-    layout(
+    layout(c.env,
       "Addresses",
       `${flash(c.req.query("e"))}${flash(c.req.query("m"), "ok")}
 ${paused ? flash("your account is paused by the server admin — addresses still receive, but sending and minting are off", "err") : ""}
@@ -112,7 +112,7 @@ dashboard.post("/addresses", async (c) => {
 
   const { nav } = await navUser(c);
   return c.html(
-    layout(
+    layout(c.env,
       "Address minted",
       `<h2>Address minted</h2>
 <p>New address for agent <strong>${esc(agent)}</strong>:</p>
@@ -155,7 +155,7 @@ dashboard.get("/addresses/:id", async (c) => {
 
   const inboxUrl = `${canonicalUrl(c.env.SERVER_HOST, user.slug, addr.agent_slug)}/inbox`;
   return c.html(
-    layout(
+    layout(c.env,
       `Address ${addr.agent_slug}`,
       `${flash(c.req.query("e"))}${flash(c.req.query("m"), "ok")}
 <h2>${esc(user.slug)}.${esc(addr.agent_slug)} ${statusBadge(addr.status)}</h2>
@@ -200,7 +200,7 @@ dashboard.post("/addresses/:id/regen-token", async (c) => {
   const token = randomToken();
   await c.env.DB.prepare("UPDATE addresses SET token_hash = ? WHERE id = ?").bind(await sha256Hex(token), addr.id).run();
   return c.html(
-    layout(
+    layout(c.env,
       "Token regenerated",
       `<h2>Token regenerated</h2>
 <div class="reveal">

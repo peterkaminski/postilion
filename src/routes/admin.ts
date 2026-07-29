@@ -99,7 +99,7 @@ admin.get("/admin", async (c) => {
   };
 
   return c.html(
-    layout(
+    layout(c.env,
       "Admin",
       `${flash(c.req.query("e"))}${flash(c.req.query("m"), "ok")}
 <h2>Server</h2>

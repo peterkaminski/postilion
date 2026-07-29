@@ -15,7 +15,7 @@ site.get("/", async (c) => {
   const user = await currentPrincipal(c);
   if (user) return c.redirect("/dashboard");
   return c.html(
-    layout(
+    layout(c.env,
       "Welcome",
       `<h2>A mail server for agents</h2>
 <p>Postilion hosts <strong>IFP mailboxes</strong>: you sign up, mint addresses for your agents, and your agents send and receive <a href="https://github.com/Inter-Face-Protocol/ifp">Inter-Face</a> messages through this server — the way a mail host holds your email inboxes.</p>
@@ -30,7 +30,7 @@ site.get("/", async (c) => {
 site.get("/signup", (c) => {
   const e = c.req.query("e");
   return c.html(
-    layout(
+    layout(c.env,
       "Sign up",
       `<h2>Sign up</h2>
 ${flash(e)}
@@ -92,7 +92,7 @@ site.post("/signup", async (c) => {
 site.get("/login", (c) => {
   const e = c.req.query("e");
   return c.html(
-    layout(
+    layout(c.env,
       "Sign in",
       `<h2>Sign in</h2>
 ${flash(e)}
@@ -126,7 +126,7 @@ site.post("/login", async (c) => {
 site.get("/auth/pending", (c) => {
   const e = c.req.query("e");
   return c.html(
-    layout(
+    layout(c.env,
       "Check your email",
       `<h2>Check your email</h2>
 ${flash(e)}
@@ -152,7 +152,7 @@ site.get("/auth/verify", async (c) => {
   const token = c.req.query("t") ?? "";
   const result = await verifyMagicLink(c, token);
   if (!result.ok) {
-    return c.html(layout("Sign-in problem", `<h2>Sign-in problem</h2>${flash(result.error)}<p><a href="/login">Try again</a></p>`), 400);
+    return c.html(layout(c.env, "Sign-in problem", `<h2>Sign-in problem</h2>${flash(result.error)}<p><a href="/login">Try again</a></p>`), 400);
   }
   return c.redirect("/dashboard");
 });

@@ -2,7 +2,9 @@
 
 **A mail server for agents.** Postilion hosts mailboxes for the [Inter-Face (IFP)](https://github.com/Inter-Face-Protocol/ifp) agent-messaging ecosystem: humans (**principals**) sign up, mint **addresses** for their agents, and the agents send and receive [IFP-4](https://github.com/Inter-Face-Protocol/ifp/blob/main/ifp-4-structured-message.md) structured messages through the server.
 
-The analogy to email infrastructure is deliberate. [IFP-6](https://github.com/Inter-Face-Protocol/ifp/blob/main/ifp-6-https-transport.md) plays SMTP's role — how messages move. Postilion plays the mail host's role — where mailboxes live. Most people don't run their own mail server; they get an account at a host. Same idea, for agents. (A *postilion* rode the near horse of a mail coach's team — the name is from the same postal attic.)
+The analogy to email infrastructure is deliberate. [IFP-6](https://github.com/Inter-Face-Protocol/ifp/blob/main/ifp-6-https-transport.md) plays SMTP's role — how messages move. Postilion plays the mail host's role — where mailboxes live. Most people don't run their own mail server; they get an account at a host. Same idea, for agents.
+
+> **"Postilion", with one "L."** A postilion rode the mails on the near horse of the team, riding one horse rather than driving them all: one rider, one horse, one L. (The French write *postillon* with two; English travels lighter.)
 
 ## What it does
 
@@ -65,7 +67,9 @@ npx wrangler secret put TURNSTILE_SECRET   # optional; unset skips humanness che
 npx wrangler deploy
 ```
 
-Configuration is in `wrangler.jsonc` vars: `SERVER_HOST` (the host in your addresses), `ADMIN_EMAILS` (comma-separated; these emails may sign up without a passcode and see the admin screens), quotas, retention, and `TURNSTILE_SITE_KEY`.
+Configuration is in `wrangler.jsonc` vars: `SERVER_HOST` (the host in your addresses), `ADMIN_EMAILS` (comma-separated; these emails may sign up without a passcode and see the admin screens), quotas, retention, and `TURNSTILE_SITE_KEY` (see [docs/turnstile.md](docs/turnstile.md) for minting a widget).
+
+**Instance name:** set `INSTANCE_NAME` to what *your* deployment is called (e.g. `"Postilion Server 01"`). The instance name is the header brand; the footer always credits the software: *"This server runs Postilion vX.Y.Z."* Unset, the instance is simply "Postilion".
 
 Sign-in email (magic link + PIN) is sent through a service-bound mailer worker (`MAILROOM` binding — see `src/env.ts` for the one-method interface it must implement). Without the binding, links are logged to the console — fine for local `wrangler dev`, not for production.
 

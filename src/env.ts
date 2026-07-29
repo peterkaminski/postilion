@@ -26,6 +26,8 @@ export interface Env {
   SERVER_DAILY_QUOTA: string;
   PRINCIPAL_DAILY_QUOTA: string;
   TURNSTILE_SITE_KEY: string;
+  /** Optional display name for this deployment (instance chrome); the software name is the fallback. */
+  INSTANCE_NAME?: string;
   // Secrets
   TURNSTILE_SECRET?: string;
 }

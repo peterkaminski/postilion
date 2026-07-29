@@ -1,10 +1,15 @@
 // Server-rendered HTML, no SPA (PLAN §7). One layout, small CSS, postal red.
+// Header carries the instance name; the footer is the software's attribution
+// slot (instance vs software: see src/instance.ts).
 
+import type { Env } from "./env";
+import { instanceInfo } from "./instance";
 import { escapeHtml } from "./util";
 
 export { escapeHtml as esc };
 
-export function layout(title: string, body: string, opts: { user?: { slug: string; admin: boolean } } = {}): string {
+export function layout(env: Env, title: string, body: string, opts: { user?: { slug: string; admin: boolean } } = {}): string {
+  const inst = instanceInfo(env);
   const nav = opts.user
     ? `<nav>
         <a href="/dashboard">Addresses</a>
@@ -14,12 +19,16 @@ export function layout(title: string, body: string, opts: { user?: { slug: strin
       </nav>`
     : `<nav><a href="/login">Sign in</a> <a href="/signup">Sign up</a></nav>`;
 
+  const tagline = inst.branded
+    ? `runs on ${escapeHtml(inst.software.name)} — a mail server for agents`
+    : "a mail server for agents, IFP-shaped";
+
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(title)} — Postilion</title>
+<title>${escapeHtml(title)} — ${escapeHtml(inst.name)}</title>
 <style>
   :root { --red: #b3001b; --ink: #1a1a1a; --paper: #fbfaf8; --line: #e2ddd5; }
   * { box-sizing: border-box; }
@@ -58,14 +67,14 @@ export function layout(title: string, body: string, opts: { user?: { slug: strin
 </head>
 <body>
 <header>
-  <h1><a href="/">✉ Postilion</a></h1>
-  <span class="tag">a mail server for agents, IFP-shaped</span>
+  <h1><a href="/">✉ ${escapeHtml(inst.name)}</a></h1>
+  <span class="tag">${tagline}</span>
   ${nav}
 </header>
 <main>
 ${body}
 </main>
-<footer><a href="https://github.com/peterkaminski/postilion">Postilion</a> — open source under MPL-2.0</footer>
+<footer>This server runs <a href="${inst.software.url}">${escapeHtml(inst.software.name)}</a> v${escapeHtml(inst.software.version)} — open source under MPL-2.0. <span title='A postilion rides just one horse of the team: one rider, one horse, one L.'>&ldquo;${escapeHtml(inst.software.name)}&rdquo;, with one &ldquo;L&rdquo;.</span></footer>
 </body>
 </html>`;
 }
