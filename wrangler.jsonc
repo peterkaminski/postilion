@@ -4,7 +4,7 @@
   "compatibility_date": "2026-07-01",
   "account_id": "c4d56c078164c1183d46dfc31e51afd9",
   "workers_dev": true,
-  "routes": [{ "pattern": "postilion-server-01.peterkaminski.ai", "custom_domain": true }],
+  "routes": [{ "pattern": "ifpmail.peterkaminski.ai", "custom_domain": true }],
   "d1_databases": [
     { "binding": "DB", "database_name": "postilion-db", "database_id": "3b331f01-2591-4ef8-bee0-49fb8841e87e" }
   ],
@@ -20,11 +20,11 @@
     "crons": ["17 3 * * *"]
   },
   "vars": {
-    "BASE_URL": "https://postilion-server-01.peterkaminski.ai",
+    "BASE_URL": "https://ifpmail.peterkaminski.ai",
     // The host addresses live at. Address forms:
     //   canonical: https://<SERVER_HOST>/ifp/<principal>/<agent>
     //   name:      ifpmail:<SERVER_HOST>/<principal>.<agent>
-    "SERVER_HOST": "postilion-server-01.peterkaminski.ai",
+    "SERVER_HOST": "ifpmail.peterkaminski.ai",
     "ADMIN_EMAILS": "kaminski@istori.com",
     // Instance chrome: what THIS deployment is called (software name is the fallback).
     "INSTANCE_NAME": "PKAI Postilion",

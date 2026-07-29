@@ -10,7 +10,7 @@ Widget creation lives in the dashboard. (It can also be done with the API, but o
 2. **Add widget.**
 3. **Widget name:** `postilion` (or your instance name — the name is only for your dashboard).
 4. **Hostnames:** add every hostname the screens are served from. For the first Postilion server that's:
-   - `postilion-server-01.peterkaminski.ai`
+   - `ifpmail.peterkaminski.ai`
    - `postilion.kaminski.workers.dev`
 5. **Widget mode:** *Managed* (recommended — Cloudflare decides when to challenge). *Non-interactive* is fine if you never want users to see a checkbox.
 6. Create, then copy the **Site Key** and **Secret Key**.
