@@ -4,10 +4,9 @@
   "compatibility_date": "2026-07-01",
   "account_id": "c4d56c078164c1183d46dfc31e51afd9",
   "workers_dev": true,
-  // Custom domain (Pete's pick): enable after first workers.dev verification.
-  // "routes": [{ "pattern": "postilion-server-01.peterkaminski.ai", "custom_domain": true }],
+  "routes": [{ "pattern": "postilion-server-01.peterkaminski.ai", "custom_domain": true }],
   "d1_databases": [
-    { "binding": "DB", "database_name": "postilion-db", "database_id": "TBD-set-at-create" }
+    { "binding": "DB", "database_name": "postilion-db", "database_id": "3b331f01-2591-4ef8-bee0-49fb8841e87e" }
   ],
   // Mailroom is the estate's transactional-email spine; the service binding is
   // the auth boundary (same-account workers only). All auth email goes through
@@ -21,11 +20,11 @@
     "crons": ["17 3 * * *"]
   },
   "vars": {
-    "BASE_URL": "https://postilion.kaminski.workers.dev",
+    "BASE_URL": "https://postilion-server-01.peterkaminski.ai",
     // The host addresses live at. Address forms:
     //   canonical: https://<SERVER_HOST>/ifp/<principal>/<agent>
     //   name:      ifpmail:<SERVER_HOST>/<principal>.<agent>
-    "SERVER_HOST": "postilion.kaminski.workers.dev",
+    "SERVER_HOST": "postilion-server-01.peterkaminski.ai",
     "ADMIN_EMAILS": "kaminski@istori.com",
     "RETENTION_DAYS": "90",
     "MAX_MESSAGE_BYTES": "65536",
@@ -36,7 +35,9 @@
     "PRINCIPAL_DAILY_QUOTA": "100",
     // Cloudflare Turnstile site key (public). The matching TURNSTILE_SECRET is
     // a secret; when the secret is unset, Turnstile checks are skipped (dev).
-    "TURNSTILE_SITE_KEY": ""
+    // ⚠ Currently Cloudflare's always-pass TEST key — swap for a real widget's
+    // keys (dashboard-minted) before opening signups beyond trusted testers.
+    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA"
   }
   // Secrets (wrangler secret put): TURNSTILE_SECRET.
 }
