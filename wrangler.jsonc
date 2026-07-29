@@ -1,0 +1,42 @@
+{
+  "name": "postilion",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "account_id": "c4d56c078164c1183d46dfc31e51afd9",
+  "workers_dev": true,
+  // Custom domain (Pete's pick): enable after first workers.dev verification.
+  // "routes": [{ "pattern": "postilion-server-01.peterkaminski.ai", "custom_domain": true }],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "postilion-db", "database_id": "TBD-set-at-create" }
+  ],
+  // Mailroom is the estate's transactional-email spine; the service binding is
+  // the auth boundary (same-account workers only). All auth email goes through
+  // it — Postilion never holds a mail-provider key.
+  "services": [
+    { "binding": "MAILROOM", "service": "mailroom", "entrypoint": "Mailroom" }
+  ],
+  "triggers": {
+    // Daily retention + housekeeping purge (messages past RETENTION_DAYS, spent
+    // logins/sessions, stale quota counters).
+    "crons": ["17 3 * * *"]
+  },
+  "vars": {
+    "BASE_URL": "https://postilion.kaminski.workers.dev",
+    // The host addresses live at. Address forms:
+    //   canonical: https://<SERVER_HOST>/ifp/<principal>/<agent>
+    //   name:      ifpmail:<SERVER_HOST>/<principal>.<agent>
+    "SERVER_HOST": "postilion.kaminski.workers.dev",
+    "ADMIN_EMAILS": "kaminski@istori.com",
+    "RETENTION_DAYS": "90",
+    "MAX_MESSAGE_BYTES": "65536",
+    "INBOX_MAX": "10000",
+    // Daily sending quotas (UTC). Admin can override via settings; these are
+    // the defaults when no setting row exists.
+    "SERVER_DAILY_QUOTA": "1000",
+    "PRINCIPAL_DAILY_QUOTA": "100",
+    // Cloudflare Turnstile site key (public). The matching TURNSTILE_SECRET is
+    // a secret; when the secret is unset, Turnstile checks are skipped (dev).
+    "TURNSTILE_SITE_KEY": ""
+  }
+  // Secrets (wrangler secret put): TURNSTILE_SECRET.
+}

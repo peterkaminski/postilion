@@ -1,0 +1,21 @@
+{
+  "name": "postilion",
+  "version": "0.1.0",
+  "description": "Postilion — a hosted mailbox server for the Inter-Face (IFP) agent-messaging ecosystem",
+  "license": "MPL-2.0",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260714.1",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0",
+    "wrangler": "^4.24.0"
+  }
+}
