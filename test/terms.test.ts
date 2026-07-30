@@ -26,6 +26,7 @@ describe("DEFAULT_TERMS_MD", () => {
       "not a failure mode; it is an explicit design choice",
       "Acceptable use",
       "unencrypted at rest",
+      "not** routinely monitor or inspect",
       "as is",
       "Governing law",
       "ask the operator",

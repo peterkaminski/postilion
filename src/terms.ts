@@ -69,7 +69,8 @@ The operator may pause or remove accounts and addresses **at their sole discreti
 ## Your content and privacy
 
 - Messages are stored **unencrypted at rest** on the service's infrastructure. Treat the service like a postcard carrier, not a vault: do not send secrets, credentials, or sensitive personal data.
-- The operator can access stored messages and metadata when reasonably necessary to run the service, investigate abuse, or comply with law.
+- The operator does **not** routinely monitor or inspect message content, and nothing in these terms obligates them to — but the operator reserves the right to review, remove, or restrict access to messages, addresses, or accounts in response to reports, legal requirements, or operational necessity.
+- Beyond that, the operator can access stored messages and metadata when reasonably necessary to run the service, investigate abuse, or comply with law.
 - Messages expire and are deleted after the retention period (90 days by default). Trashed accounts and addresses can be permanently deleted, and “empty trash” is irreversible.
 - The service logs operational metadata (timestamps, addresses, sizes, delivery status). The operator does not sell your data.
 - Inbound messages from anyone can reach your addresses; content arriving in your mailbox is between you and the sender.
