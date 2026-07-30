@@ -46,11 +46,15 @@
     // the defaults when no setting row exists.
     "SERVER_DAILY_QUOTA": "1000",
     "PRINCIPAL_DAILY_QUOTA": "100",
-    // Cloudflare Turnstile site key (public). The matching TURNSTILE_SECRET is
-    // a secret; when the secret is unset, Turnstile checks are skipped (dev).
-    // ⚠ Currently Cloudflare's always-pass TEST key — swap for a real widget's
-    // keys (dashboard-minted) before opening signups beyond trusted testers.
-    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA"
+    // Cloudflare Turnstile site key. Public by design — it is rendered into the
+    // signup and minting pages, so it belongs in config, not in secrets. The
+    // matching TURNSTILE_SECRET is a real secret (wrangler secret put); when
+    // that secret is unset the humanness check is skipped entirely, which is
+    // the intended local-dev behaviour and NOT safe in production.
+    // Real widget installed 2026-07-29, replacing Cloudflare's always-pass test
+    // pair. Both halves must come from the same widget, and the widget's domain
+    // allowlist must include this instance's SERVER_HOST.
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAEBgH4MnlEmX2lFs"
   }
   // Secrets (wrangler secret put): TURNSTILE_SECRET.
 }
