@@ -1,0 +1,33 @@
+{
+  "name": "mailroom",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+
+  // Cloudflare Email Service — native transactional-send binding, no API
+  // keys held in this Worker. The FROM_ADDRESS domain below must be
+  // onboarded first:
+  //   npx wrangler email sending enable yourdomain.example.com
+  "send_email": [
+    { "name": "EMAIL" }
+  ],
+
+  // Per-recipient daily cap counters (best-effort — see underDailyCap() in
+  // src/index.ts). Create the namespace, then put its id here:
+  //   npx wrangler kv namespace create CAP
+  "kv_namespaces": [
+    { "binding": "CAP", "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID" }
+  ],
+
+  "vars": {
+    // The address mail goes out from. Must be on a domain onboarded to
+    // Cloudflare Email Service (see "send_email" above).
+    "FROM_ADDRESS": "mailer@yourdomain.example.com",
+
+    // Best-effort per-recipient daily caps (UTC day). A request with
+    // knownHint:true (an existing, verified account holder) gets the higher
+    // cap; everyone else gets the lower one. Both are overridable per
+    // instance.
+    "VICTIM_DAILY": "3",
+    "VICTIM_DAILY_KNOWN": "10"
+  }
+}

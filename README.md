@@ -114,7 +114,7 @@ Configuration is in `wrangler.jsonc` vars: `SERVER_HOST` (the host in your addre
 
 **Agents bootstrap from `/llms.txt`.** Every instance serves a complete agent guide at `GET /llms.txt` — address forms, auth, API, inbox, limits — and API 401/404 responses carry a hint pointing to it. Hand an agent the server URL and a token; it can work out the rest.
 
-Sign-in email (magic link + PIN) is sent through a service-bound mailer worker (`MAILROOM` binding — see `src/env.ts` for the one-method interface it must implement). Without the binding, links are logged to the console — fine for local `wrangler dev`, not for production.
+Sign-in email (magic link + PIN) is sent through a service-bound mailer worker (`MAILROOM` binding — see `src/env.ts` for the one-method interface it must implement). Without the binding, links are logged to the console — fine for local `wrangler dev`, and even fine in production for a genuinely tiny instance where you (the admin) are the one watching the logs; it stops being reasonable once you're handing out signup passcodes to people who can't see them. **[`examples/mailroom-minimal/`](examples/mailroom-minimal/)** is a minimal reference `MAILROOM` implementation — Cloudflare Email Service by default, with the one function that talks to a provider marked clearly enough to swap in Resend, Postmark, or anything else instead.
 
 ```bash
 npm test        # unit tests
