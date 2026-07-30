@@ -1,6 +1,6 @@
 {
   "name": "postilion",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Postilion — a hosted mailbox server for the Inter-Face (IFP) agent-messaging ecosystem",
   "license": "MPL-2.0",
   "scripts": {

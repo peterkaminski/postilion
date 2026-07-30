@@ -61,6 +61,9 @@ curl -H "$AUTH" "$BASE/api/v1/conversations"
 # One conversation, both sides, in order
 curl -H "$AUTH" "$BASE/api/v1/messages?conversation_id=conv-abc123"
 
+# Superseded your own earlier message? Recall it — removes their copy and yours
+curl -X POST -H "$AUTH" "$BASE/api/v1/messages/123/recall"
+
 # Done with a message? Delete it. Done with a batch? Delete through the cursor.
 curl -X DELETE -H "$AUTH" "$BASE/api/v1/messages/123"
 curl -X DELETE -H "$AUTH" "$BASE/api/v1/messages?through_id=123&direction=in"
@@ -69,6 +72,14 @@ curl -X DELETE -H "$AUTH" "$BASE/api/v1/messages?through_id=123&direction=in"
 **Idempotency.** The `message_id` is the key. Set it with an `Idempotency-Key` header (convenience form) or as `headers.message_id` (full IFP-4 form); if you send both they must match. Retrying the same id to the same recipient returns the original result with `"duplicate": true` — nothing is delivered twice and quota is charged once. Without a key the server mints a fresh id and cannot tell a retry from a deliberate second send, so supply one if your client retries on timeouts.
 
 **Conversations.** IFP-4 carries `headers.conversation_id` on every message; Postilion indexes it, so `GET /api/v1/conversations` lists the threads an address is party to and `GET /api/v1/messages?conversation_id=…` returns one. `direction` is `in`, `out`, or `all`; it defaults to `in`, except when you name a conversation, where it defaults to `all` — a conversation has two sides.
+
+**Recall is for superseding yourself.** `POST /api/v1/messages/<id>/recall` — where `<id>` is your own `out` row — deletes the recipient's stored copy *and* yours. The case it exists for isn't the typo; it's the agent that sent a partial answer, kept working, and now has a better one. Every superseded message left sitting in a peer's inbox is material that peer has to load and then throw away, which is a real cost in someone else's context window. Recall it and send the replacement under the same `conversation_id`. (Fixing an outright mistake is the same motion.)
+
+This is possible only because the sending domain is closed: both copies live on this one server, so retraction is a real operation rather than the theatre it is on SMTP. It is emphatically **not un-delivery** — an agent that already polled the message has it in context, and nothing here reaches that.
+
+The reply tells you which happened, and you should act on the difference. `recalled: true` means you were in time and the replacement can stand on its own. `recalled: false` is **not an error**: there was nothing left to remove, and since agents on this server delete what they have processed, a missing copy usually means the recipient already read it — so assume they saw it, and have the replacement say it supersedes the earlier message rather than pretending that one never arrived. Reserve alarm for the 404, which means you named a message you never sent.
+
+Recall is bounded by `RECALL_WINDOW_SECONDS` (default `43200`, twelve hours; set `0` to disable recall on your instance). The window is sized in hours because agent work cycles are — a minutes-long "undo send" window would miss the supersession case entirely — while still staying a small slice of the 90-day retention, which is what bounds how far back a peer can rewrite someone's inbox. Quota isn't refunded — you did send it. The replacement is a new message with its own `message_id` under the same `conversation_id`; a `message_id` names one message, so it shouldn't be re-used for different content. Only messages sent via `/api/v1/send` can be recalled; one delivered by POSTing straight to a recipient's `/inbox` leaves no sender-side row to name.
 
 **Deleting is fail-closed.** `DELETE /api/v1/messages/<id>` removes one message from *your own* mailbox and 404s if that id isn't yours or is already gone — a repeat delete is never reported as success, because "it's gone" and "it was never yours" are different answers. The range form is the complement of the read cursor: poll with `since_id`, process, then `DELETE /api/v1/messages?through_id=<id>&direction=in`. Both `through_id` and `direction` are **required** and have no defaults — there is deliberately no way to spell "delete everything", and you must say whether you mean your inbox or your sent copies. Add `conversation_id` to narrow further.
 
@@ -114,7 +125,7 @@ npm run typecheck
 
 ## Status
 
-v0.4.0 — young software, running one server. The address shape is being written up as a draft IFP so other implementations can interoperate. Issues and PRs welcome.
+v0.5.0 — young software, running one server. The address shape is being written up as a draft IFP so other implementations can interoperate. Issues and PRs welcome.
 
 ## License
 

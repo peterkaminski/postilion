@@ -32,6 +32,16 @@
     "RETENTION_DAYS": "90",
     "MAX_MESSAGE_BYTES": "65536",
     "INBOX_MAX": "10000",
+    // How long after sending an agent may recall a message (seconds; 12h).
+    // Recall deletes the recipient's stored copy and the sender's own —
+    // possible only because the sending domain is closed. Sized for
+    // SUPERSESSION, not typos: an agent that has done more work and has a
+    // better answer pulls the earlier one so the recipient doesn't spend
+    // tokens reading material it will only have to discard. Agent work cycles
+    // run for hours, so a minutes-long window would miss the point. It is NOT
+    // un-delivery: an agent that already polled the message still has it.
+    // "0" disables recall.
+    "RECALL_WINDOW_SECONDS": "43200",
     // Daily sending quotas (UTC). Admin can override via settings; these are
     // the defaults when no setting row exists.
     "SERVER_DAILY_QUOTA": "1000",

@@ -4,7 +4,7 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
 import type { Env } from "../env";
-import { intVar } from "../env";
+import { intVar, recallWindowSeconds } from "../env";
 import { parseAddress, isLocal, canonicalUrl, nameForm } from "../address";
 import { checkIfp4, buildIfp4, type Ifp4Message } from "../ifp";
 import { checkQuota, consumeQuota } from "../quota";
@@ -264,6 +264,95 @@ api.get("/api/v1/messages/:id", async (c) => {
   }
   const { body: _body, ...meta } = row;
   return c.json({ ok: true, ...meta, message });
+});
+
+// Recall a sent message: remove the recipient's copy, and your own with it.
+//
+// The case this is really for is supersession, not typos. An agent that sent a
+// partial answer and has since done more work wants the earlier message gone
+// before the recipient reads it, because every superseded message left in a
+// peer's inbox is material that peer must load and then discard. That is a
+// direct cost in someone else's context window. Hence a window measured in
+// hours (RECALL_WINDOW_SECONDS, 12h default) rather than the minutes an
+// "undo send" button would want — agent work cycles are long.
+//
+// This is only possible because the sending domain is closed — both copies of
+// a message live in this one database, so retraction is a real operation
+// rather than the theatre "recall this message" is on SMTP. It is still NOT
+// un-delivery. If the recipient's agent already polled the message, it is in
+// that agent's context and nothing here reaches it. Recall retracts the
+// server's copy, never the knowledge.
+//
+// Its own path rather than a flag on DELETE: this reaches into someone else's
+// mailbox, and the more dangerous action should be the more explicit one.
+//
+// Both copies go, so "retracted" is a clean state rather than a half-one.
+// Quota is not refunded — you did send it.
+api.post("/api/v1/messages/:id/recall", async (c) => {
+  const box = c.get("mailbox");
+  if (effectiveStatus(box) !== "active") return err(c, 403, "recall is paused for this address or account");
+
+  const windowSeconds = recallWindowSeconds(c.env);
+  if (windowSeconds === 0) return err(c, 403, "recall is disabled on this server");
+
+  const id = Number(c.req.param("id"));
+  if (!Number.isInteger(id) || id <= 0) return err(c, 400, "message id must be a positive integer");
+
+  // The window is evaluated in SQL so it reads the same clock and the same
+  // datetime format the row was written with.
+  const row = await c.env.DB.prepare(
+    `SELECT id, direction, peer, ifp_message_id, created_at,
+            (created_at >= datetime('now', ?)) AS in_window
+       FROM messages WHERE id = ? AND address_id = ?`,
+  )
+    .bind(`-${windowSeconds} seconds`, id, box.addressId)
+    .first<{ id: number; direction: string; peer: string; ifp_message_id: string | null; created_at: string; in_window: number }>();
+
+  // A message you never sent is a genuine error, and distinct from a recall
+  // that arrived too late.
+  if (!row) return err(c, 404, "no such message");
+  if (row.direction !== "out") return err(c, 403, "only the sender can recall a message; this one you received");
+  if (!row.ifp_message_id) return err(c, 403, "this message has no message_id and cannot be matched to recall");
+  if (!row.in_window) {
+    return err(c, 403, `the recall window has passed (${windowSeconds}s after sending on this server)`);
+  }
+
+  const recipient = parseAddress(row.peer);
+  const target = recipient && isLocal(recipient, c.env.SERVER_HOST)
+    ? await lookupMailbox(c.env, recipient.principal, recipient.agent)
+    : null;
+
+  // Delete the recipient's copy and your own together, so a failure leaves
+  // neither half-applied.
+  const statements = [c.env.DB.prepare("DELETE FROM messages WHERE id = ? AND address_id = ?").bind(id, box.addressId)];
+  if (target) {
+    statements.unshift(
+      c.env.DB.prepare(
+        "DELETE FROM messages WHERE address_id = ? AND direction = 'in' AND peer = ? AND ifp_message_id = ?",
+      ).bind(target.addressId, canonicalUrl(c.env.SERVER_HOST, box.principalSlug, box.agentSlug), row.ifp_message_id),
+    );
+  }
+  const results = await c.env.DB.batch(statements);
+  const recalled = target ? ((results[0] as { meta?: { changes?: number } }).meta?.changes ?? 0) > 0 : false;
+
+  // Deliberately not a 404 and not a silent success: "too late" is a normal,
+  // expected outcome that the sender needs to learn. And on a server where
+  // agents delete what they have processed, the recipient's copy being gone
+  // is itself evidence they read it — the most useful thing this call can say.
+  return c.json({
+    ok: true,
+    recalled,
+    message_id: row.ifp_message_id,
+    recipient: row.peer,
+    own_copy_deleted: true,
+    ...(recalled
+      ? {}
+      : {
+          reason: target
+            ? "already gone — the recipient's copy was deleted before the recall, which on this server usually means their agent had processed it"
+            : "the recipient address no longer exists on this server",
+        }),
+  });
 });
 
 // Delete one message from this mailbox. Fail-closed: the id must name a row

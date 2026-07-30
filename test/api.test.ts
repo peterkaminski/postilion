@@ -222,6 +222,151 @@ describe("conversations", () => {
   });
 });
 
+describe("POST /api/v1/messages/:id/recall", () => {
+  const recall = (env: Env, token: string, id: number) =>
+    api.request(`/api/v1/messages/${id}/recall`, { method: "POST", headers: { authorization: `Bearer ${token}` } }, env);
+
+  async function sendAndFindIds(env: Env) {
+    await send(env, TOKEN_ALICE, { to: BOB, text: "oops, wrong number" });
+    const mine = (await (await get(env, TOKEN_ALICE, "/api/v1/messages?direction=out")).json()) as any;
+    const theirs = (await (await get(env, TOKEN_BOB, "/api/v1/messages")).json()) as any;
+    return { outId: mine.messages[0].id, inId: theirs.messages[0].id };
+  }
+
+  it("removes the recipient's copy and the sender's own", async () => {
+    const env = await seedEnv();
+    const { outId } = await sendAndFindIds(env);
+
+    const res = await recall(env, TOKEN_ALICE, outId);
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as any;
+    expect(json.recalled).toBe(true);
+    expect(json.own_copy_deleted).toBe(true);
+    expect(json.recipient).toBe(BOB);
+
+    const bobs = (await (await get(env, TOKEN_BOB, "/api/v1/messages")).json()) as any;
+    expect(bobs.messages).toHaveLength(0);
+    const alices = (await (await get(env, TOKEN_ALICE, "/api/v1/messages?direction=out")).json()) as any;
+    expect(alices.messages).toHaveLength(0);
+  });
+
+  it("reports recalled:false — not an error — when the recipient already deleted it", async () => {
+    const env = await seedEnv();
+    const { outId, inId } = await sendAndFindIds(env);
+
+    // Bob processes and deletes it before Alice thinks better of it.
+    await del(env, TOKEN_BOB, `/api/v1/messages/${inId}`);
+
+    const res = await recall(env, TOKEN_ALICE, outId);
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as any;
+    expect(json.ok).toBe(true);
+    expect(json.recalled).toBe(false);
+    expect(json.reason).toMatch(/already gone/);
+  });
+
+  it("404s for a message you never sent — a real error, distinct from 'too late'", async () => {
+    const env = await seedEnv();
+    const { outId } = await sendAndFindIds(env);
+    const res = await recall(env, TOKEN_BOB, outId);
+    expect(res.status).toBe(404);
+  });
+
+  it("refuses to recall a message you received", async () => {
+    const env = await seedEnv();
+    const { inId } = await sendAndFindIds(env);
+    const res = await recall(env, TOKEN_BOB, inId);
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as any).error).toMatch(/only the sender/);
+  });
+
+  it("refuses once the window has passed", async () => {
+    const env = createSqliteEnv({
+      principals: [
+        { id: 1, slug: "alice", email: "alice@example.com" },
+        { id: 2, slug: "bob", email: "bob@example.com" },
+      ],
+      addresses: [
+        { id: 1, principalId: 1, agentSlug: "helper", tokenHash: await sha256Hex(TOKEN_ALICE) },
+        { id: 2, principalId: 2, agentSlug: "scout", tokenHash: await sha256Hex(TOKEN_BOB) },
+      ],
+      env: { RECALL_WINDOW_SECONDS: "900" },
+    });
+    const { outId } = await sendAndFindIds(env);
+    // Backdate the send past the window.
+    env.DB._db.prepare("UPDATE messages SET created_at = datetime('now', '-1 hour')").run();
+
+    const res = await recall(env, TOKEN_ALICE, outId);
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as any).error).toMatch(/recall window has passed/);
+
+    const bobs = (await (await get(env, TOKEN_BOB, "/api/v1/messages")).json()) as any;
+    expect(bobs.messages).toHaveLength(1);
+  });
+
+  it("the default window is hours, not minutes — a 6h-old message is still recallable", async () => {
+    const env = await seedEnv(); // no RECALL_WINDOW_SECONDS set
+    const { outId } = await sendAndFindIds(env);
+    env.DB._db.prepare("UPDATE messages SET created_at = datetime('now', '-6 hours')").run();
+
+    const res = await recall(env, TOKEN_ALICE, outId);
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as any).recalled).toBe(true);
+  });
+
+  it("the default window still ends — a 13h-old message is not recallable", async () => {
+    const env = await seedEnv();
+    const { outId } = await sendAndFindIds(env);
+    env.DB._db.prepare("UPDATE messages SET created_at = datetime('now', '-13 hours')").run();
+
+    const res = await recall(env, TOKEN_ALICE, outId);
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as any).error).toMatch(/recall window has passed/);
+  });
+
+  it("RECALL_WINDOW_SECONDS=0 disables recall entirely", async () => {
+    const env = createSqliteEnv({
+      principals: [
+        { id: 1, slug: "alice", email: "alice@example.com" },
+        { id: 2, slug: "bob", email: "bob@example.com" },
+      ],
+      addresses: [
+        { id: 1, principalId: 1, agentSlug: "helper", tokenHash: await sha256Hex(TOKEN_ALICE) },
+        { id: 2, principalId: 2, agentSlug: "scout", tokenHash: await sha256Hex(TOKEN_BOB) },
+      ],
+      env: { RECALL_WINDOW_SECONDS: "0" },
+    });
+    const { outId } = await sendAndFindIds(env);
+
+    const res = await recall(env, TOKEN_ALICE, outId);
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as any).error).toMatch(/recall is disabled/);
+
+    const bobs = (await (await get(env, TOKEN_BOB, "/api/v1/messages")).json()) as any;
+    expect(bobs.messages).toHaveLength(1);
+  });
+
+  // A message_id names one message, so it should not be re-used for different
+  // content — a replacement is a new message. What this pins is only that
+  // recall leaves no residue: the rows are gone, not tombstoned, so nothing
+  // lingering in the unique index blocks a later legitimate send of the same
+  // message (here, re-sending the identical thing after recalling it).
+  it("leaves no residue — the rows are gone, not tombstoned", async () => {
+    const env = await seedEnv();
+    const key = "msg-identical-001";
+    await send(env, TOKEN_ALICE, { to: BOB, text: "same message" }, { "idempotency-key": key });
+    const mine = (await (await get(env, TOKEN_ALICE, "/api/v1/messages?direction=out")).json()) as any;
+
+    await recall(env, TOKEN_ALICE, mine.messages[0].id);
+
+    const again = (await (await send(env, TOKEN_ALICE, { to: BOB, text: "same message" }, { "idempotency-key": key })).json()) as any;
+    expect(again.duplicate).toBeUndefined();
+
+    const bobs = (await (await get(env, TOKEN_BOB, "/api/v1/messages")).json()) as any;
+    expect(bobs.messages).toHaveLength(1);
+  });
+});
+
 describe("DELETE /api/v1/messages/:id", () => {
   it("deletes one message from your own mailbox", async () => {
     const env = await seedEnv();
