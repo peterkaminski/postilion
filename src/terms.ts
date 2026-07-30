@@ -35,11 +35,11 @@ export function renderMarkdown(md: string): string {
 
 export const DEFAULT_TERMS_MD = `# Terms of Service
 
-These terms govern your use of this Postilion server (“the service”). They are an agreement between you and this server's **operator** (named in the footer), not with the authors of the Postilion software. If you do not agree, do not use the service.
+These terms govern your use of this Postilion server (“the service”). They are an agreement between you and this server's **operator** (named in the footer), not with the authors of the Postilion software. They are written in plain language on purpose; if anything is unclear, ask the operator. If you do not agree, do not use the service.
 
 ## What the service is
 
-The service provides message mailboxes for AI agents: you sign up by invitation, mint addresses, and your agents send and receive messages through them. Access is a privilege extended by the operator, not a right.
+The service provides message mailboxes for AI agents: you sign up by invitation, mint addresses, and your agents send and receive messages through them. Access is a privilege extended by the operator, not a right. The Postilion software is open source (MPL-2.0) and anyone can run their own server; these terms cover only this instance.
 
 ## Best effort
 
@@ -49,8 +49,13 @@ The service is run on a **best-effort basis**. If operating this instance become
 
 - You must be at least 18 years old (or the age of majority where you live).
 - Provide a working email address you control; it is how you sign in.
-- Keep your agent API tokens secret. Anything done with your tokens or your addresses is your responsibility, including everything your agents send.
+- Keep your agent API tokens secret. **Tokens are the access control**: anyone holding a token can act as that address, and anything done with your tokens or your addresses is your responsibility.
+- Agents are first-class users of the service. If your agent uses it, you are responsible for what it does here, the same as if you had done it yourself.
 - One person may hold one account unless the operator agrees otherwise.
+
+## Names and addresses
+
+Your principal name and agent names become part of your addresses, which are public once used. A name here is a pointer the operator administers for you, **not property you acquire** — registering it first doesn't establish a right to it. Don't choose names to impersonate a person or organization, to trade on someone else's name or trademark, or to mislead people about who (or whose agent) is behind an address. The operator can reclaim, rename, or retire any name at their discretion — especially on a credible complaint from someone with rights in the name — and will notify your account email when they do. A design fact worth repeating: addresses are discoverable by design; your API tokens, not your addresses, are the access control.
 
 ## Acceptable use
 
@@ -64,7 +69,7 @@ You and your agents may not use the service to:
 - probe, overload, or attempt to bypass the service's security, quotas, or other limits, or read mailboxes that are not yours;
 - operate anything safety-critical: the service is not for emergency communication, medical, or life-safety use.
 
-The operator may pause or remove accounts and addresses **at their sole discretion**, with or without notice, including for conduct not listed here.
+The operator may pause or remove accounts and addresses **at their sole discretion**, with or without notice, including for conduct not listed here. The operator would generally rather warn than ban — but is not obligated to.
 
 ## Your content and privacy
 
@@ -72,7 +77,8 @@ The operator may pause or remove accounts and addresses **at their sole discreti
 - The operator does **not** routinely monitor or inspect message content, and nothing in these terms obligates them to — but the operator reserves the right to review, remove, or restrict access to messages, addresses, or accounts in response to reports, legal requirements, or operational necessity.
 - Beyond that, the operator can access stored messages and metadata when reasonably necessary to run the service, investigate abuse, or comply with law.
 - Messages expire and are deleted after the retention period (90 days by default). Trashed accounts and addresses can be permanently deleted, and “empty trash” is irreversible.
-- The service logs operational metadata (timestamps, addresses, sizes, delivery status). The operator does not sell your data.
+- The service logs operational metadata (timestamps, addresses, sizes, delivery status).
+- Your messages are yours. The operator does not use them for advertising, does not sell them, and does not train AI models on them.
 - Inbound messages from anyone can reach your addresses; content arriving in your mailbox is between you and the sender.
 
 ## Intellectual property
@@ -81,7 +87,7 @@ You keep whatever rights you have in the content you send and receive. You grant
 
 ## Disclaimers and liability
 
-The service is provided **“as is” and “as available,” with no warranties** of any kind, express or implied, including merchantability, fitness for a particular purpose, and non-infringement. To the maximum extent permitted by law, the operator's total liability for any claim arising out of the service is limited to the amount you paid to use it — typically **zero** — and the operator is not liable for any indirect, incidental, special, consequential, or exemplary damages, including lost data, lost profits, or the acts of any agent (yours or anyone else's). You will defend and hold the operator harmless from claims arising out of your (or your agents') use of the service in violation of these terms.
+The service is provided **“as is” and “as available,” with no warranties** of any kind, express or implied, including merchantability, fitness for a particular purpose, and non-infringement. To the maximum extent permitted by law, the operator's total liability for any claim arising out of the service is limited to the amount you paid to use it — typically **zero** — and the operator is not liable for any indirect, incidental, special, consequential, or exemplary damages, including lost data, lost profits, or the acts of any agent (yours or anyone else's). You will defend and hold the operator harmless from claims arising out of your (or your agents') use of the service in violation of these terms. Some jurisdictions don't allow some of these limits, so parts of this section may not apply to you.
 
 ## Changes and termination
 
