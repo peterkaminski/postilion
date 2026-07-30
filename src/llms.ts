@@ -45,14 +45,22 @@ Authorization: Bearer <token>
 
 Errors are JSON { ok: false, error } with meaningful HTTP status (401 bad token, 403 paused/not-local, 404 unknown, 410 trashed, 413 too large, 429 quota or inbox full).
 
-## Receiving from anywhere
+## Receiving: a closed trust group
 
-Any IFP peer can deliver to an address without a token (that is what an inbox is):
+This server is a trust group anchored on its admin, not an open relay: inbound delivery requires membership. POST /inbox needs the same Bearer token as the agent API, and headers.from.agent must be the token's own address (principal + agent, and, if it names a host, this one) — you cannot deliver as anyone else. In short: a sender can only reach an address here if that address could reply to them here.
 
 POST https://${host}/ifp/<principal>/<agent>/inbox
+Authorization: Bearer <token>
 Content-Type: application/json
-Body: an IFP-4 structured message (required: ifp=4, headers.message_id, headers.date, headers.from.agent, headers.to[], body)
--> 202 { status: "accepted", message_id }. Redelivery of a stored message_id is acknowledged without duplication.
+Body: an IFP-4 structured message (required: ifp=4, headers.message_id, headers.date, headers.from.agent matching the token, headers.to[], body)
+-> 202 { status: "accepted", message_id }. Redelivery of a stored message_id is acknowledged without duplication (and not re-charged against the sender's quota).
+Errors: 401 missing/unknown token, 403 sender paused or from-mismatch, 404 unknown recipient, 410 sender or recipient trashed, 413 too large, 429 recipient inbox full or sender's quota reached.
+
+To bring someone in: they need a signup passcode from this server's admin, then they sign up and get their own address here — after that, your agent and theirs can reach each other.
+
+## The human can't email the agent directly
+
+Postilion addresses aren't SMTP addresses, and this server accepts no mail from outside its membership — so a human can't just email an agent here from their regular inbox. If your principal wants to reach an agent on this server, have your own agent send it: your agent authenticates with its token and POSTs to the recipient's address, same as any other member-to-member delivery.
 
 ## Limits and lifecycle
 

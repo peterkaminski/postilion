@@ -11,11 +11,17 @@ The analogy to email infrastructure is deliberate. [IFP-6](https://github.com/In
 - **Addresses are IFP-shaped** and identify agent, principal, and server, in two equivalent forms:
   - canonical URL: `https://<host>/ifp/<principal>/<agent>`
   - name form: `ifpmail:<host>/<principal>.<agent>`
-- **Receiving:** every address exposes an IFP-6 inbox (`POST <address>/inbox`) open to any IFP peer. Messages are held for pickup — *poste restante* — and agents poll the API for them.
+- **Receiving:** every address exposes an IFP-6 inbox (`POST <address>/inbox`), but only to other members of this server's trust group. Messages are held for pickup — *poste restante* — and agents poll the API for them.
 - **Sending:** agents authenticate with a per-address bearer token and send to addresses **on the same server**. Postilion is deliberately a closed sending domain: no store-and-forward, no relaying, no cross-server delivery — there is no path through the server for anyone else's mail.
 - **Principals** sign up with an admin-minted passcode and a magic link + PIN by email; they mint, pause, trash, and untrash addresses (Cloudflare Turnstile checks humanness at signup and minting) and see message metadata per address for debugging.
 - **Admins** mint signup passcodes (with expiry), list principals with usage, set daily sending quotas (server-wide and per-principal), and pause/trash/untrash principals.
 - **Retention:** messages expire after 90 days (configurable). Trashed things are recoverable until the trash is emptied.
+
+## Trust model
+
+Every Postilion server is a **trust group anchored on its admin**, not an open relay. Mail flows only between members: this server accepts inbound mail only from a sender you could reply to here — another principal+agent address on this same server, authenticated with its own bearer token. You can't receive from, or deliver as, an address that isn't a member. To bring a friend in, the server's admin mints them a signup passcode; once they sign up, your agents can reach each other.
+
+**How do I, a human, email an agent here?** You don't email it directly — Postilion addresses aren't SMTP addresses, and this server accepts no mail from outside its membership. You go through your own agent: it authenticates with its token and delivers to the recipient's address on this server, the same as any other member-to-member send.
 
 ## Agent API
 
@@ -44,10 +50,10 @@ curl -H "$AUTH" "$BASE/api/v1/messages?since_id=0&limit=50"
 curl -H "$AUTH" "$BASE/api/v1/messages/123"
 ```
 
-Inbound from any IFP peer, no token needed (that's what an inbox is):
+Inbound is member-to-member only: the sender authenticates with its own token, and its address must match the message's `from`.
 
 ```bash
-curl -X POST -H "Content-Type: application/json" \
+curl -X POST -H "$AUTH" -H "Content-Type: application/json" \
   -d @ifp4-message.json \
   "https://postilion.example.com/ifp/alice/helper/inbox"
 # → 202 {"status":"accepted","message_id":"..."}
@@ -84,7 +90,7 @@ npm run typecheck
 
 ## Status
 
-v0.1 — young software, running one server. The address shape is being written up as a draft IFP so other implementations can interoperate. Issues and PRs welcome.
+v0.3.0 — young software, running one server. The address shape is being written up as a draft IFP so other implementations can interoperate. Issues and PRs welcome.
 
 ## License
 

@@ -8,8 +8,7 @@ import { intVar } from "../env";
 import { parseAddress, isLocal, canonicalUrl, nameForm } from "../address";
 import { checkIfp4, buildIfp4, type Ifp4Message } from "../ifp";
 import { checkQuota, consumeQuota } from "../quota";
-import { lookupMailbox, lookupMailboxByToken, effectiveStatus, inboxCount, storeInbound, type Mailbox } from "../mailbox";
-import { sha256Hex } from "../util";
+import { lookupMailbox, effectiveStatus, inboxCount, storeInbound, authenticateBearer, type Mailbox } from "../mailbox";
 
 export const api = new Hono<{ Bindings: Env; Variables: { mailbox: Mailbox } }>();
 
@@ -18,14 +17,14 @@ const err = (c: ApiContext, status: 400 | 401 | 403 | 404 | 410 | 413 | 429, err
   c.json({ ok: false, error }, status);
 
 api.use("/api/v1/*", async (c, next) => {
-  const auth = c.req.header("authorization") ?? "";
-  const m = /^Bearer\s+([a-f0-9]{64})$/i.exec(auth);
-  const hint = `agent guide: ${c.env.BASE_URL}/llms.txt`;
-  if (!m) return c.json({ ok: false, error: "missing or malformed bearer token", hint }, 401);
-  const box = await lookupMailboxByToken(c.env, await sha256Hex(m[1].toLowerCase()));
-  if (!box) return c.json({ ok: false, error: "unknown token", hint }, 401);
-  if (effectiveStatus(box) === "trashed") return err(c, 410, "this address is in the trash");
-  c.set("mailbox", box);
+  const auth = await authenticateBearer(c);
+  if (!auth.ok) {
+    return c.json(
+      auth.status === 401 ? { ok: false, error: auth.error, hint: auth.hint } : { ok: false, error: auth.error },
+      auth.status,
+    );
+  }
+  c.set("mailbox", auth.box);
   await next();
 });
 

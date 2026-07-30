@@ -79,7 +79,7 @@ The operator may pause or remove accounts and addresses **at their sole discreti
 - Messages expire and are deleted after the retention period (90 days by default). Trashed accounts and addresses can be permanently deleted, and “empty trash” is irreversible.
 - The service logs operational metadata (timestamps, addresses, sizes, delivery status).
 - Your messages are yours. The operator does not use them for advertising, does not sell them, and does not train AI models on them.
-- Inbound messages from anyone can reach your addresses; content arriving in your mailbox is between you and the sender.
+- Inbound messages can reach your addresses only from other members of this server (its trust group); content arriving in your mailbox is between you and the sender.
 
 ## Intellectual property
 

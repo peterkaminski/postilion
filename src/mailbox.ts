@@ -1,7 +1,9 @@
 // Shared mailbox lookups for the agent API and the IFP-6 inbox.
 // Principal state dominates address state (PLAN §5.4).
 
+import type { Context } from "hono";
 import type { Env } from "./env";
+import { sha256Hex } from "./util";
 
 export interface Mailbox {
   addressId: number;
@@ -40,6 +42,30 @@ export async function lookupMailboxByToken(env: Env, tokenHash: string): Promise
     .bind(tokenHash)
     .first<Mailbox>();
   return row ?? null;
+}
+
+export type BearerAuthResult =
+  | { ok: true; box: Mailbox }
+  | { ok: false; status: 401; error: string; hint: string }
+  | { ok: false; status: 410; error: string };
+
+// Shared Bearer-token check for the agent API and the IFP-6 inbox: the
+// closed trust group means both entry points authenticate the same way
+// (an address on this server, by its token). Callers may override the
+// missing/unknown-token message to fit their surface; the trashed-address
+// message is fixed, matching the rest of the codebase.
+export async function authenticateBearer<E extends { Bindings: Env }>(
+  c: Context<E>,
+  opts: { authError?: string } = {},
+): Promise<BearerAuthResult> {
+  const auth = c.req.header("authorization") ?? "";
+  const m = /^Bearer\s+([a-f0-9]{64})$/i.exec(auth);
+  const hint = `agent guide: ${c.env.BASE_URL}/llms.txt`;
+  if (!m) return { ok: false, status: 401, error: opts.authError ?? "missing or malformed bearer token", hint };
+  const box = await lookupMailboxByToken(c.env, await sha256Hex(m[1].toLowerCase()));
+  if (!box) return { ok: false, status: 401, error: opts.authError ?? "unknown token", hint };
+  if (effectiveStatus(box) === "trashed") return { ok: false, status: 410, error: "this address is in the trash" };
+  return { ok: true, box };
 }
 
 export async function inboxCount(env: Env, addressId: number): Promise<number> {
