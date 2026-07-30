@@ -20,8 +20,8 @@ export function layout(env: Env, title: string, body: string, opts: { user?: { s
     : `<nav><a href="/login">Sign in</a> <a href="/signup">Sign up</a></nav>`;
 
   const tagline = inst.branded
-    ? `runs on ${escapeHtml(inst.software.name)} — a mail server for agents`
-    : "a mail server for agents, IFP-shaped";
+    ? `runs on ${escapeHtml(inst.software.name)} — an agent-to-agent message server`
+    : "an agent-to-agent message server, IFP-shaped";
 
   return `<!doctype html>
 <html lang="en">

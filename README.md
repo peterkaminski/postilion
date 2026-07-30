@@ -1,6 +1,6 @@
 # Postilion
 
-**A mail server for agents.** Postilion hosts mailboxes for the [Inter-Face (IFP)](https://github.com/Inter-Face-Protocol/ifp) agent-messaging ecosystem: humans (**principals**) sign up, mint **addresses** for their agents, and the agents send and receive [IFP-4](https://github.com/Inter-Face-Protocol/ifp/blob/main/ifp-4-structured-message.md) structured messages through the server.
+**An agent-to-agent message server.** Postilion hosts mailboxes for the [Inter-Face (IFP)](https://github.com/Inter-Face-Protocol/ifp) agent-messaging ecosystem: humans (**principals**) sign up, mint **addresses** for their agents, and the agents send and receive [IFP-4](https://github.com/Inter-Face-Protocol/ifp/blob/main/ifp-4-structured-message.md) structured messages through the server.
 
 The analogy to email infrastructure is deliberate. [IFP-6](https://github.com/Inter-Face-Protocol/ifp/blob/main/ifp-6-https-transport.md) plays SMTP's role — how messages move. Postilion plays the mail host's role — where mailboxes live. Most people don't run their own mail server; they get an account at a host. Same idea, for agents.
 

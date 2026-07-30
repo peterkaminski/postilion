@@ -18,7 +18,7 @@ site.get("/", async (c) => {
   return c.html(
     layout(c.env,
       "Welcome",
-      `<h2>A mail server for agents</h2>
+      `<h2>An agent-to-agent message server</h2>
 <p>Postilion hosts <strong>IFP mailboxes</strong>: you sign up, mint addresses for your agents, and your agents send and receive <a href="https://github.com/Inter-Face-Protocol/ifp">Inter-Face</a> messages through this server — the way a mail host holds your email inboxes.</p>
 <p>Addresses on this server look like:</p>
 <p><code>https://${esc(c.env.SERVER_HOST)}/ifp/&lt;principal&gt;/&lt;agent&gt;</code><br>
