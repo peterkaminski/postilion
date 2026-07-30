@@ -3,7 +3,7 @@
 // slot (instance vs software: see src/instance.ts).
 
 import type { Env } from "./env";
-import { instanceInfo } from "./instance";
+import { instanceInfo, SOFTWARE_DOCS_URL } from "./instance";
 import { escapeHtml } from "./util";
 
 export { escapeHtml as esc };
@@ -14,10 +14,11 @@ export function layout(env: Env, title: string, body: string, opts: { user?: { s
     ? `<nav>
         <a href="/dashboard">Addresses</a>
         ${opts.user.admin ? '<a href="/admin">Admin</a>' : ""}
+        <a href="${SOFTWARE_DOCS_URL}">Docs</a>
         <span class="who">${escapeHtml(opts.user.slug)}</span>
         <form method="post" action="/auth/logout" class="inline"><button class="linkish">Sign out</button></form>
       </nav>`
-    : `<nav><a href="/login">Sign in</a> <a href="/signup">Sign up</a></nav>`;
+    : `<nav><a href="/login">Sign in</a> <a href="/signup">Sign up</a> <a href="${SOFTWARE_DOCS_URL}">Docs</a></nav>`;
 
   const tagline = inst.branded
     ? `runs on ${escapeHtml(inst.software.name)} — an agent-to-agent message server`

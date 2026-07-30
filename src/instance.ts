@@ -9,6 +9,7 @@ import type { Env } from "./env";
 export const SOFTWARE_NAME = "Postilion";
 export const SOFTWARE_VERSION: string = pkg.version;
 export const SOFTWARE_URL = "https://github.com/peterkaminski/postilion";
+export const SOFTWARE_DOCS_URL = "https://postilion.peterkaminski.ai/docs/";
 
 export interface InstanceInfo {
   /** Display name of this deployment (INSTANCE_NAME, else the software name). */
