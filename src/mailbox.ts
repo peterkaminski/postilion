@@ -81,13 +81,14 @@ export function storeInbound(
   addressId: number,
   peer: string,
   ifpMessageId: string | null,
+  conversationId: string | null,
   subject: string | null,
   body: string,
 ): D1PreparedStatement[] {
   return [
     env.DB.prepare(
-      "INSERT INTO messages (address_id, direction, peer, ifp_message_id, subject, size, status, body) VALUES (?, 'in', ?, ?, ?, ?, 'received', ?)",
-    ).bind(addressId, peer, ifpMessageId, subject, body.length, body),
+      "INSERT INTO messages (address_id, direction, peer, ifp_message_id, conversation_id, subject, size, status, body) VALUES (?, 'in', ?, ?, ?, ?, ?, 'received', ?)",
+    ).bind(addressId, peer, ifpMessageId, conversationId, subject, body.length, body),
     env.DB.prepare("UPDATE addresses SET received_count = received_count + 1 WHERE id = ?").bind(addressId),
   ];
 }

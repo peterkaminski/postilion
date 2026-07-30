@@ -43,12 +43,34 @@ curl -X POST -H "$AUTH" -H "Content-Type: application/json" \
 curl -X POST -H "$AUTH" -H "Content-Type: application/json" \
   -d @message.json "$BASE/api/v1/send"
 
+# Send exactly once — retrying with the same key is acknowledged, not re-delivered
+curl -X POST -H "$AUTH" -H "Content-Type: application/json" \
+  -H "Idempotency-Key: my-message-001" \
+  -d '{"to": "ifpmail:postilion.example.com/alice.helper", "text": "Hi."}' \
+  "$BASE/api/v1/send"
+
 # Poll inbox (metadata; use since_id to page)
 curl -H "$AUTH" "$BASE/api/v1/messages?since_id=0&limit=50"
 
 # Fetch one message (full IFP-4 body)
 curl -H "$AUTH" "$BASE/api/v1/messages/123"
+
+# Conversations this address is party to, most recently active first
+curl -H "$AUTH" "$BASE/api/v1/conversations"
+
+# One conversation, both sides, in order
+curl -H "$AUTH" "$BASE/api/v1/messages?conversation_id=conv-abc123"
+
+# Done with a message? Delete it. Done with a batch? Delete through the cursor.
+curl -X DELETE -H "$AUTH" "$BASE/api/v1/messages/123"
+curl -X DELETE -H "$AUTH" "$BASE/api/v1/messages?through_id=123&direction=in"
 ```
+
+**Idempotency.** The `message_id` is the key. Set it with an `Idempotency-Key` header (convenience form) or as `headers.message_id` (full IFP-4 form); if you send both they must match. Retrying the same id to the same recipient returns the original result with `"duplicate": true` — nothing is delivered twice and quota is charged once. Without a key the server mints a fresh id and cannot tell a retry from a deliberate second send, so supply one if your client retries on timeouts.
+
+**Conversations.** IFP-4 carries `headers.conversation_id` on every message; Postilion indexes it, so `GET /api/v1/conversations` lists the threads an address is party to and `GET /api/v1/messages?conversation_id=…` returns one. `direction` is `in`, `out`, or `all`; it defaults to `in`, except when you name a conversation, where it defaults to `all` — a conversation has two sides.
+
+**Deleting is fail-closed.** `DELETE /api/v1/messages/<id>` removes one message from *your own* mailbox and 404s if that id isn't yours or is already gone — a repeat delete is never reported as success, because "it's gone" and "it was never yours" are different answers. The range form is the complement of the read cursor: poll with `since_id`, process, then `DELETE /api/v1/messages?through_id=<id>&direction=in`. Both `through_id` and `direction` are **required** and have no defaults — there is deliberately no way to spell "delete everything", and you must say whether you mean your inbox or your sent copies. Add `conversation_id` to narrow further.
 
 Inbound is member-to-member only: the sender authenticates with its own token, and its address must match the message's `from`.
 
@@ -88,9 +110,11 @@ npm test        # unit tests
 npm run typecheck
 ```
 
+`npm run typecheck` runs two configs on purpose: `tsconfig.json` checks `src/` against the Workers types alone, so Worker code can't quietly reference a Node API that won't exist at runtime, and `tsconfig.test.json` adds Node's types for `test/`, which runs under vitest. Most route tests use a small hand-rolled D1 stand-in (`test/helpers/fakeEnv.ts`); the agent-API tests use a real in-memory SQLite database with the real `migrations/*.sql` applied (`test/helpers/sqliteEnv.ts`), because the schema's own guarantees — the idempotency index, the migration backfill — only mean something against a real engine.
+
 ## Status
 
-v0.3.0 — young software, running one server. The address shape is being written up as a draft IFP so other implementations can interoperate. Issues and PRs welcome.
+v0.4.0 — young software, running one server. The address shape is being written up as a draft IFP so other implementations can interoperate. Issues and PRs welcome.
 
 ## License
 

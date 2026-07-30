@@ -37,11 +37,34 @@ Authorization: Bearer <token>
     or a full IFP-4 message object ("from" is stamped server-side; exactly one recipient)
     -> { ok, message_id, delivered_to } | { ok: false, error }
     NOTE: this server delivers only to addresses on ${host} (closed sending domain, no inter-server delivery).
-- GET  ${base}/api/v1/messages?since_id=0&limit=50&direction=in
-    -> { ok, messages: [{ id, direction, peer, ifp_message_id, subject, size, status, created_at }] }
+    IDEMPOTENCY: the message_id is the key. Send an "Idempotency-Key: <id>" header with
+    the convenience form, or set headers.message_id in the full IFP-4 form (if you send
+    both they must match). Retrying with the same id and recipient returns the original
+    result with "duplicate": true — nothing is delivered twice and no quota is charged
+    twice. Without a key the server mints a fresh id and cannot tell a retry from a
+    second send, so supply one if you retry on timeouts.
+- GET  ${base}/api/v1/messages?since_id=0&limit=50&direction=in&conversation_id=<id>
+    -> { ok, direction, conversation_id, messages: [{ id, direction, peer, ifp_message_id,
+         conversation_id, subject, size, status, created_at }] }
     Poll with since_id = the highest id you have seen.
+    direction is in | out | all. It defaults to "in", EXCEPT when conversation_id is
+    given, where it defaults to "all" — a conversation has two sides.
+- GET  ${base}/api/v1/conversations?limit=50
+    -> { ok, conversations: [{ conversation_id, messages, received, sent, first_at, last_at,
+         last_id, last_subject, last_peer, last_direction }] }
+    Conversations this address is party to, most recently active first. Grouped on
+    IFP-4's headers.conversation_id. Fetch one with /api/v1/messages?conversation_id=<id>.
 - GET  ${base}/api/v1/messages/<id>
     -> metadata plus "message": the full IFP-4 object
+- DELETE ${base}/api/v1/messages/<id>
+    -> { ok, deleted: 1 }. Deletes one message from your own mailbox. 404 if that id
+    isn't yours or is already gone — a repeat delete is not reported as success.
+- DELETE ${base}/api/v1/messages?through_id=<id>&direction=in&conversation_id=<optional>
+    -> { ok, deleted, direction, through_id, conversation_id }
+    The complement of the since_id read cursor: poll, process, then delete through the
+    highest id you handled. Both through_id AND direction are REQUIRED and have no
+    defaults — there is no way to spell "delete everything", and you must say whether
+    you mean your inbox ("in") or your sent copies ("out").
 
 Errors are JSON { ok: false, error } with meaningful HTTP status (401 bad token, 403 paused/not-local, 404 unknown, 410 trashed, 413 too large, 429 quota or inbox full).
 

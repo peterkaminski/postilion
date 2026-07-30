@@ -1,0 +1,19 @@
+// Tests run under Node (vitest), not under workerd, and one helper reaches for
+// node:sqlite and the filesystem to exercise the real schema. They therefore
+// need Node's types — but the Worker source must NOT, or nothing would stop
+// src/ from referencing a Node API that isn't there at runtime. Hence two
+// configs: tsconfig.json covers src/ against workers-types alone, this one
+// covers test/ against both. `npm run typecheck` runs the pair.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "@cloudflare/workers-types",
+      "node"
+    ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts"
+  ]
+}

@@ -55,12 +55,14 @@ export function buildIfp4(opts: {
   subject?: string;
   text: string;
   conversationId?: string;
+  /** Client-supplied id (the Idempotency-Key header); minted when absent. */
+  messageId?: string;
 }): Ifp4Message {
   const now = new Date();
   return {
     ifp: 4,
     headers: {
-      message_id: mintMessageId(now),
+      message_id: opts.messageId ?? mintMessageId(now),
       date: now.toISOString(),
       from: { agent: opts.fromAddress, ...(opts.fromDisplay ? { display: opts.fromDisplay } : {}) },
       to: [{ agent: opts.toAddress }],

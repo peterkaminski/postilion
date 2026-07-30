@@ -84,13 +84,15 @@ inbox.post("/ifp/:principal/:agent/inbox", async (c) => {
     return c.json({ error: "inbox full" }, 429);
   }
 
-  // Idempotency on message_id per mailbox: a redelivered message is accepted
-  // but stored (and quota-charged) once (IFP-6 recommends Idempotency-Key =
-  // message_id).
+  // Idempotency on message_id per (mailbox, sender): a redelivered message is
+  // accepted but stored (and quota-charged) once (IFP-6 recommends
+  // Idempotency-Key = message_id). Keyed on the sender as well as the mailbox,
+  // so two peers that happen to choose the same message_id don't collide and
+  // get one another's mail swallowed as a phantom "redelivery".
   const dup = await c.env.DB.prepare(
-    "SELECT id FROM messages WHERE address_id = ? AND direction = 'in' AND ifp_message_id = ?",
+    "SELECT id FROM messages WHERE address_id = ? AND direction = 'in' AND peer = ? AND ifp_message_id = ?",
   )
-    .bind(box.addressId, msg.headers.message_id)
+    .bind(box.addressId, senderCanonical, msg.headers.message_id)
     .first();
   if (dup) return c.json({ status: "accepted", message_id: msg.headers.message_id }, 202);
 
@@ -110,7 +112,15 @@ inbox.post("/ifp/:principal/:agent/inbox", async (c) => {
   }
 
   await c.env.DB.batch(
-    storeInbound(c.env, box.addressId, senderCanonical, msg.headers.message_id, msg.headers.subject ?? null, JSON.stringify(msg)),
+    storeInbound(
+      c.env,
+      box.addressId,
+      senderCanonical,
+      msg.headers.message_id,
+      typeof msg.headers.conversation_id === "string" ? msg.headers.conversation_id : null,
+      msg.headers.subject ?? null,
+      JSON.stringify(msg),
+    ),
   );
   await consumeQuota(c.env, sender.principalId);
 

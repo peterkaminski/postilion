@@ -27,6 +27,7 @@ interface MessageRow {
   direction: "in" | "out";
   peer: string;
   ifpMessageId: string | null;
+  conversationId: string | null;
   subject: string | null;
   size: number;
   status: string;
@@ -71,16 +72,18 @@ function makeFakeD1(seed: { principals: SeedPrincipal[]; addresses: SeedAddress[
       return { row: { n } };
     }
     if (sql.startsWith("INSERT INTO messages") && sql.includes("'in'")) {
-      const [addressId, peer, ifpMessageId, subject, size, body] = bound as [number, string, string | null, string | null, number, string];
-      messages.push({ id: nextMessageId++, addressId, direction: "in", peer, ifpMessageId, subject, size, status: "received", body });
+      const [addressId, peer, ifpMessageId, conversationId, subject, size, body] = bound as [number, string, string | null, string | null, string | null, number, string];
+      messages.push({ id: nextMessageId++, addressId, direction: "in", peer, ifpMessageId, conversationId, subject, size, status: "received", body });
       return {};
     }
     if (sql.includes("UPDATE addresses SET received_count")) {
       return {}; // counter not read by any query under test
     }
-    if (sql.includes("SELECT id FROM messages WHERE address_id = ? AND direction = 'in' AND ifp_message_id = ?")) {
-      const [addressId, ifpMessageId] = bound as [number, string];
-      const m = messages.find((x) => x.addressId === addressId && x.direction === "in" && x.ifpMessageId === ifpMessageId);
+    if (sql.includes("SELECT id FROM messages WHERE address_id = ? AND direction = 'in' AND peer = ? AND ifp_message_id = ?")) {
+      const [addressId, peer, ifpMessageId] = bound as [number, string, string];
+      const m = messages.find(
+        (x) => x.addressId === addressId && x.direction === "in" && x.peer === peer && x.ifpMessageId === ifpMessageId,
+      );
       return { row: m ? { id: m.id } : null };
     }
     if (sql.includes("FROM settings WHERE key IN")) {
